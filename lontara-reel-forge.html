@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lontara — Reel Forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#151009;
+    --panel:#1f1810;
+    --panel2:#241c13;
+    --line:#3a2f20;
+    --ink:#efe6d6;
+    --muted:#a3937a;
+    --brass:#c69a52;
+    --brass-dim:#8a6c37;
+    --teal:#4f8c7c;
+    --rust:#b3543a;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+  }
+  .wrap{max-width:720px; margin:0 auto; padding:20px 16px 80px;}
+  header.top{padding:18px 4px 22px; border-bottom:1px solid var(--line); margin-bottom:22px;}
+  header.top .eyebrow{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--brass); margin-bottom:6px;}
+  header.top h1{font-family:'Fraunces',serif; font-weight:600; font-size:30px; margin:0 0 6px; letter-spacing:-.01em;}
+  header.top p{margin:0; color:var(--muted); font-size:13.5px; line-height:1.5;}
+
+  .strip{display:flex; gap:3px; margin:14px 0 24px; padding:6px 0;}
+  .strip .hole{width:6px; height:10px; background:var(--line); border-radius:2px; opacity:.6;}
+
+  .step{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:14px; overflow:hidden;}
+  .step-head{display:flex; align-items:center; gap:10px; padding:14px 16px; cursor:pointer; user-select:none;}
+  .step-num{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--brass); border:1px solid var(--brass-dim); border-radius:4px; padding:2px 7px;}
+  .step-title{font-family:'Fraunces',serif; font-weight:600; font-size:16.5px; flex:1;}
+  .step-sub{color:var(--muted); font-size:12px;}
+  .chev{color:var(--muted); font-size:13px; transition:transform .2s;}
+  .step.collapsed .chev{transform:rotate(-90deg);}
+  .step-body{padding:0 16px 18px;}
+  .step.collapsed .step-body{display:none;}
+
+  label{display:block; font-size:12px; color:var(--muted); margin:10px 0 5px; font-family:'JetBrains Mono',monospace; letter-spacing:.02em;}
+  input[type=text], input[type=password], input[type=number], textarea, select{
+    width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--ink);
+    border-radius:7px; padding:10px 11px; font-size:14px; font-family:'Inter',sans-serif;
+  }
+  textarea{resize:vertical; min-height:64px; line-height:1.45;}
+  input:focus, textarea:focus, select:focus{outline:1px solid var(--brass); border-color:var(--brass);}
+  .row{display:flex; gap:10px;}
+  .row > *{flex:1;}
+  .hint{font-size:11.5px; color:var(--muted); margin-top:5px; line-height:1.4;}
+
+  button{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; cursor:pointer;
+    border-radius:7px; border:1px solid var(--brass-dim); background:transparent; color:var(--brass);
+    padding:10px 16px; transition:.15s;
+  }
+  button:hover{background:rgba(198,154,82,0.1);}
+  button.primary{background:var(--brass); color:#1a1409; border-color:var(--brass);}
+  button.primary:hover{background:#d6ab63;}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+  button.small{padding:6px 10px; font-size:12px;}
+  .btnrow{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+
+  .scene{border:1px solid var(--line); border-radius:8px; padding:12px; margin-top:12px; background:var(--panel2);}
+  .scene-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+  .scene-tag{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--teal);}
+  .scene-img{width:100%; max-width:200px; aspect-ratio:9/16; object-fit:cover; border-radius:6px; background:#0e0b07; margin:8px auto 0; display:block;}
+  .scene-img.empty{display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:11px; font-family:'JetBrains Mono',monospace;}
+
+  .status{font-family:'JetBrains Mono',monospace; font-size:11.5px; padding:8px 10px; border-radius:6px; margin-top:10px; display:none;}
+  .status.show{display:block;}
+  .status.ok{background:rgba(79,140,124,.15); color:#8fc4b4; border:1px solid rgba(79,140,124,.3);}
+  .status.err{background:rgba(179,84,58,.15); color:#e0a08c; border:1px solid rgba(179,84,58,.3);}
+  .status.busy{background:rgba(198,154,82,.12); color:var(--brass); border:1px solid rgba(198,154,82,.3);}
+
+  canvas{width:100%; max-width:340px; aspect-ratio:9/16; background:#000; border-radius:8px; display:block; margin:12px auto; border:1px solid var(--line);}
+
+  .toggle{display:flex; align-items:center; gap:9px; padding:9px 0;}
+  .toggle input{width:auto;}
+  .toggle span{font-size:13px; color:var(--ink);}
+
+  footer{text-align:center; color:var(--muted); font-size:11px; font-family:'JetBrains Mono',monospace; margin-top:30px; letter-spacing:.03em;}
+
+  .cl-group{margin-bottom:16px;}
+  .cl-group h3{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--teal); margin:0 0 8px;}
+  .cl-item{display:flex; align-items:flex-start; gap:9px; padding:7px 0; border-bottom:1px solid var(--line); cursor:pointer;}
+  .cl-item:last-child{border-bottom:none;}
+  .cl-item input{margin-top:3px; width:auto; accent-color:var(--brass);}
+  .cl-item span{font-size:13.5px; line-height:1.4;}
+  .cl-item.checked span{color:var(--muted); text-decoration:line-through;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">Lontara Studio · Alat Mandiri</div>
+    <h1>Reel Forge</h1>
+    <p>Topik → naskah → gambar AI → video 15–20 detik dengan efek Ken Burns dan caption bergerak. Render 100% di browser, gratis, tanpa server.</p>
+  </header>
+
+  <div id="fileWarning" style="display:none; background:rgba(179,84,58,.18); border:1px solid rgba(179,84,58,.4); color:#e0a08c; border-radius:8px; padding:12px 14px; margin-bottom:16px; font-size:13px; line-height:1.5;">
+    ⚠️ File ini sedang dibuka langsung dari penyimpanan HP (<code>file://</code>). Dalam mode ini, browser akan <b>memblokir semua permintaan ke API</b> (naskah maupun gambar) — nanti pasti gagal dengan "Failed to fetch". Upload file ini ke hosting web (GitHub Pages, dsb) lalu buka dari alamat <code>https://...</code>-nya.
+  </div>
+
+  <div class="strip" id="filmstrip"></div>
+
+  <!-- STEP 0: SETTINGS -->
+  <div class="step" id="step-settings">
+    <div class="step-head" onclick="toggleStep('step-settings')">
+      <span class="step-num">00</span>
+      <span class="step-title">Pengaturan API</span>
+      <span class="chev">▾</span>
+    </div>
+    <div class="step-body">
+      <label>Format Naskah (Chat API)</label>
+      <select id="cfgFormat">
+        <option value="openai">OpenAI-compatible (Sumopod, OpenAI, dll)</option>
+        <option value="anthropic">Anthropic-compatible</option>
+      </select>
+      <label>API Base URL</label>
+      <input type="text" id="cfgBaseUrl" placeholder="https://ai.sumopod.com/v1">
+      <label>API Key (Naskah)</label>
+      <input type="password" id="cfgApiKey" placeholder="sk-...">
+      <label>Model</label>
+      <input type="text" id="cfgModel" placeholder="gpt-4o-mini / claude-... / gemini/gemini-2.5-flash">
+
+      <label>Provider Gambar AI</label>
+      <select id="cfgImgProvider">
+        <option value="stability">Stability AI</option>
+        <option value="gemini">Google Gemini (Imagen)</option>
+        <option value="leonardo">Leonardo AI</option>
+      </select>
+      <label>API Key (Gambar)</label>
+      <input type="password" id="cfgImgKey" placeholder="API key provider gambar">
+
+      <div class="hint">Key disimpan hanya di memori browser selama sesi ini (tidak dikirim ke server manapun selain provider AI-nya langsung). Tutup tab = key hilang. Pakai tombol export di bawah untuk simpan config sebagai file, lalu import lagi kapanpun.</div>
+      <div class="btnrow">
+        <button class="small" onclick="exportConfig()">Export Config (.json)</button>
+        <button class="small" onclick="document.getElementById('cfgFile').click()">Import Config</button>
+        <input type="file" id="cfgFile" accept="application/json" style="display:none" onchange="importConfig(event)">
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1: SCRIPT -->
+  <div class="step" id="step-1">
+    <div class="step-head" onclick="toggleStep('step-1')">
+      <span class="step-num">01</span>
+      <span class="step-title">Topik &amp; Naskah</span>
+      <span class="chev">▾</span>
+    </div>
+    <div class="step-body">
+      <label>Bahasa &amp; karakter audiens</label>
+      <select id="scriptLang">
+        <option value="id">Indonesia — gaya santai, sesuai selera penonton lokal</option>
+        <option value="en">English — natural conversational tone, international audience</option>
+      </select>
+
+      <label>Topik / ide singkat</label>
+      <textarea id="topicInput" placeholder="Misal: misteri arca yang hilang di reruntuhan candi Jawa Timur"></textarea>
+
+      <label>Konteks/isu terkini <span style="color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0;">(opsional)</span></label>
+      <textarea id="currentContext" placeholder="Tempel potongan thread, berita terbaru, komentar viral, atau sudut pandang yang lagi ramai dibahas soal topik ini. Bantu AI bikin hook yang terasa 'baru', bukan cerita lama yang diulang."></textarea>
+
+      <label>Fakta/data terverifikasi yang harus dipakai <span style="color:var(--rust); font-weight:400; text-transform:none; letter-spacing:0;">(sangat disarankan untuk akurasi)</span></label>
+      <textarea id="verifiedFacts" placeholder="Tempel nama, tanggal, angka, lokasi, atau kutipan yang sudah kamu cek kebenarannya dari sumber tepercaya. AI akan dipaksa hanya memakai fakta dari sini untuk detail spesifik, bukan mengarang sendiri."></textarea>
+      <div class="hint">App ini tidak bisa cek fakta sendiri ke internet. Makin lengkap kamu isi kolom ini, makin kecil risiko AI mengarang nama/tanggal/angka yang salah. Untuk detail yang tidak kamu masukkan di sini, AI akan diminta bicara secara umum/tidak memastikan, bukan menebak.</div>
+
+      <div class="row">
+        <div>
+          <label>Target durasi (detik)</label>
+          <input type="number" id="targetDuration" value="18" min="10" max="30">
+        </div>
+        <div>
+          <label>Jumlah scene</label>
+          <input type="number" id="sceneCount" value="4" min="2" max="7">
+        </div>
+      </div>
+
+      <label>Gaya visual (berlaku sama untuk semua scene)</label>
+      <select id="visualStyle">
+        <option value="cinematic">Cinematic — dramatis, depth of field, warna sinematik</option>
+        <option value="misterius">Misterius — gelap, bayangan tebal, suasana mencekam</option>
+        <option value="vintage">Vintage — grain film lama, warna pudar nostalgik</option>
+        <option value="sepia">Arsip Sepia — sepia tua, tekstur foto kuno berdebu</option>
+        <option value="realistic">Realistis — fotografi natural, detail tinggi, apa adanya</option>
+        <option value="dokumenter">Dokumenter — gaya jurnalistik, natural, sedikit desaturasi</option>
+        <option value="ilustrasi">Ilustrasi Artistik — lukisan digital, gaya bercerita</option>
+      </select>
+      <div class="hint">Gaya ini otomatis ditambahkan ke setiap prompt gambar, plus app memakai satu "seed" acak yang sama untuk semua scene di satu video — kombinasi ini yang bikin warna &amp; mood antar-scene senada.</div>
+
+      <div class="btnrow">
+        <button class="primary" onclick="generateScript()" id="btnGenScript">Generate Naskah</button>
+      </div>
+      <div class="status" id="statusScript"></div>
+    </div>
+  </div>
+
+  <!-- STEP 2: SCENES -->
+  <div class="step collapsed" id="step-2">
+    <div class="step-head" onclick="toggleStep('step-2')">
+      <span class="step-num">02</span>
+      <span class="step-title">Scene &amp; Gambar</span>
+      <span class="chev">▾</span>
+    </div>
+    <div class="step-body">
+      <div id="styleSeedInfo" style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <span id="styleSeedText">gaya: — · seed: —</span>
+        <button class="small" onclick="rerollSeed()" title="Tetap gaya sama, tapi variasi visual baru">🎲 Ganti Seed</button>
+      </div>
+      <div id="sceneList"></div>
+      <div class="btnrow">
+        <button onclick="generateAllImages()" id="btnGenAllImg">Generate Semua Gambar</button>
+      </div>
+      <div class="status" id="statusImg"></div>
+    </div>
+  </div>
+
+  <!-- STEP 3: RENDER -->
+  <div class="step collapsed" id="step-3">
+    <div class="step-head" onclick="toggleStep('step-3')">
+      <span class="step-num">03</span>
+      <span class="step-title">Preview &amp; Render</span>
+      <span class="chev">▾</span>
+    </div>
+    <div class="step-body">
+      <div class="toggle">
+        <input type="checkbox" id="kenBurns" checked>
+        <span>Efek Ken Burns (pan &amp; zoom)</span>
+      </div>
+      <div class="toggle">
+        <input type="checkbox" id="ttsPreview">
+        <span>Suara TTS browser saat preview (tidak ikut ke file export)</span>
+      </div>
+      <div id="voiceRow" style="display:none">
+        <label>Suara TTS</label>
+        <select id="voiceSelect"></select>
+      </div>
+      <div class="hint">Export selalu berupa video <b>bisu</b> (background + caption saja). TTS di atas cuma untuk mengecek pacing sebelum kamu tambahkan voice-over asli di CapCut.</div>
+
+      <canvas id="stage" width="1080" height="1920"></canvas>
+
+      <div class="btnrow">
+        <button onclick="previewPlay()" id="btnPreview">▶ Preview</button>
+        <button class="primary" onclick="renderVideo()" id="btnRender">Render &amp; Download (.webm)</button>
+      </div>
+      <div class="btnrow">
+        <button onclick="openChecklist()">📋 Checklist Sebelum Posting</button>
+      </div>
+      <div class="status" id="statusRender"></div>
+    </div>
+  </div>
+
+  <footer>lontara reel forge · buatan lokal, jalan di browser kamu sendiri</footer>
+</div>
+
+<div id="checklistOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:100; padding:20px 14px; overflow-y:auto;">
+  <div style="max-width:640px; margin:0 auto; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px 18px 8px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+      <h2 style="font-family:'Fraunces',serif; font-size:20px; margin:0;">Checklist Sebelum Posting</h2>
+      <button class="small" onclick="closeChecklist()">✕ Tutup</button>
+    </div>
+    <div id="checklistProgress" style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--brass); margin:6px 0 14px;">0 / 0 selesai</div>
+    <div id="checklistBody"></div>
+    <div class="btnrow" style="margin-bottom:16px;">
+      <button class="small" onclick="resetChecklist()">Reset Semua</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- STATE ---------- */
+let scenes = []; // {text, imagePrompt, duration, imgSrc, imgEl}
+let cfg = {};
+let projectSeed = Math.floor(Math.random()*1000000000);
+let currentVisualStyle = 'cinematic';
+
+if(location.protocol === 'file:'){
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('fileWarning').style.display = 'block';
+  });
+}
+
+function toggleStep(id){ document.getElementById(id).classList.toggle('collapsed'); }
+function setCollapsed(id, val){ document.getElementById(id).classList[val?'add':'remove']('collapsed'); }
+
+function readCfg(){
+  cfg = {
+    format: document.getElementById('cfgFormat').value,
+    baseUrl: document.getElementById('cfgBaseUrl').value.trim(),
+    apiKey: document.getElementById('cfgApiKey').value.trim(),
+    model: document.getElementById('cfgModel').value.trim(),
+    imgProvider: document.getElementById('cfgImgProvider').value,
+    imgKey: document.getElementById('cfgImgKey').value.trim(),
+  };
+}
+
+function exportConfig(){
+  readCfg();
+  const blob = new Blob([JSON.stringify(cfg,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lontara-config.json';
+  a.click();
+}
+function importConfig(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const c = JSON.parse(reader.result);
+      document.getElementById('cfgFormat').value = c.format || 'openai';
+      document.getElementById('cfgBaseUrl').value = c.baseUrl || '';
+      document.getElementById('cfgApiKey').value = c.apiKey || '';
+      document.getElementById('cfgModel').value = c.model || '';
+      document.getElementById('cfgImgProvider').value = c.imgProvider || 'stability';
+      document.getElementById('cfgImgKey').value = c.imgKey || '';
+    }catch(e){ alert('File config tidak valid.'); }
+  };
+  reader.readAsText(f);
+}
+
+function setStatus(id, type, msg){
+  const el = document.getElementById(id);
+  el.className = 'status show ' + type;
+  el.textContent = msg;
+}
+
+/* ---------- STEP 1: SCRIPT GEN ---------- */
+async function generateScript(){
+  readCfg();
+  const topic = document.getElementById('topicInput').value.trim();
+  const context = document.getElementById('currentContext').value.trim();
+  const facts = document.getElementById('verifiedFacts').value.trim();
+  const lang = document.getElementById('scriptLang').value; // 'id' or 'en'
+  const dur = parseInt(document.getElementById('targetDuration').value)||18;
+  const n = parseInt(document.getElementById('sceneCount').value)||4;
+  currentVisualStyle = document.getElementById('visualStyle').value;
+  projectSeed = Math.floor(Math.random()*1000000000); // new project = new consistent seed for all its scenes
+  if(!topic){ alert(lang==='id' ? 'Isi topik dulu.' : 'Fill in the topic first.'); return; }
+  if(!cfg.baseUrl || !cfg.apiKey || !cfg.model){
+    alert(lang==='id' ? 'Lengkapi pengaturan API di bagian 00 dulu.' : 'Fill in the API settings in section 00 first.');
+    setCollapsed('step-settings', false); return;
+  }
+
+  const btn = document.getElementById('btnGenScript');
+  btn.disabled = true;
+  setStatus('statusScript','busy', lang==='id' ? 'Menyusun naskah...' : 'Writing script...');
+
+  const sys = buildScriptSystemPrompt(lang, n, dur);
+  let userMsg = (lang==='id' ? 'Topik: ' : 'Topic: ') + topic +
+    (context ? (lang==='id' ? '\n\nKonteks/isu terkini yang harus dijalin ke narasi (jangan diabaikan):\n' : '\n\nCurrent context/angle to weave into the narration (do not ignore this):\n') + context : '');
+  userMsg += facts
+    ? (lang==='id'
+        ? '\n\nFAKTA/DATA TERVERIFIKASI (ini satu-satunya sumber detail spesifik yang boleh kamu pakai — nama, tanggal, angka, lokasi, kutipan. Jangan menambah detail spesifik di luar daftar ini):\n' + facts
+        : '\n\nVERIFIED FACTS (this is the only source of specific details you may use — names, dates, numbers, places, quotes. Do not add specific details beyond this list):\n' + facts)
+    : (lang==='id'
+        ? '\n\n(Tidak ada daftar fakta terverifikasi diberikan — jangan mengarang nama/tanggal/angka spesifik yang tidak kamu yakini kebenarannya; gunakan pengetahuan umum yang benar-benar mapan saja, dan tandai klaim yang sifatnya legenda/belum terkonfirmasi.)'
+        : "\n\n(No verified facts list was given — do not invent specific names/dates/numbers you're not confident about; only use well-established general knowledge, and flag any claim that is legend/unconfirmed as such.)");
+
+  try{
+    const content = await callChatAPI(sys, userMsg);
+    const jsonStr = extractJSON(content);
+    const parsed = JSON.parse(jsonStr);
+    if(!parsed || !Array.isArray(parsed.scenes) || parsed.scenes.length === 0){
+      throw new Error(lang==='id' ? 'Format respons AI tidak sesuai (tidak ada scenes).' : 'AI response format invalid (no scenes).');
+    }
+    scenes = parsed.scenes.map(s => ({
+      text: (s.text || '').trim(),
+      imagePrompt: (s.image_prompt || s.text || '').trim(),
+      duration: Number(s.duration_sec) > 0 ? Number(s.duration_sec) : (dur/n),
+      imgSrc: null
+    }));
+    normalizeDurations(dur);
+    renderSceneList();
+    buildFilmstrip();
+    setStatus('statusScript','ok', (lang==='id'
+      ? `Naskah jadi: ${scenes.length} scene, total ~${totalDuration().toFixed(1)}s`
+      : `Script ready: ${scenes.length} scenes, total ~${totalDuration().toFixed(1)}s`));
+    setCollapsed('step-1', true);
+    setCollapsed('step-2', false);
+  }catch(e){
+    console.error(e);
+    setStatus('statusScript','err', (lang==='id' ? 'Gagal generate naskah: ' : 'Failed to generate script: ') + e.message);
+  }
+  btn.disabled = false;
+}
+
+// Scale scene durations proportionally so total matches user's target duration exactly.
+function normalizeDurations(targetTotal){
+  const sum = scenes.reduce((a,s)=>a+s.duration,0);
+  if(sum <= 0) return;
+  const factor = targetTotal / sum;
+  scenes.forEach(s => s.duration = Math.max(1.2, +(s.duration * factor).toFixed(2)));
+}
+
+function buildScriptSystemPrompt(lang, n, dur){
+  const noTextRule = lang === 'id'
+    ? `ATURAN KETAT untuk "image_prompt": deskripsikan HANYA adegan visual (subjek, latar, pencahayaan, gaya, komposisi). JANGAN PERNAH minta ada tulisan, huruf, kata, angka, caption, judul, sign board bertuliskan sesuatu, atau tipografi apapun muncul di dalam gambar — model AI gambar sering salah eja/rusak saat mencoba merender teks, dan caption sudah ditangani terpisah oleh aplikasi ini di atas gambar. Kalau adegan aslinya melibatkan tulisan (prasasti, koran, dsb), deskripsikan bentuk fisiknya saja tanpa menyebut isi tulisannya.`
+    : `STRICT RULE for "image_prompt": describe ONLY the visual scene (subject, setting, lighting, style, composition). NEVER request any writing, letters, words, numbers, captions, titles, signage with text, or typography to appear in the image — AI image models frequently misspell or mangle rendered text, and captions are already handled separately by this app on top of the image. If the scene naturally involves writing (an inscription, a newspaper, etc.), describe its physical form only, never its textual content.`;
+
+  const accuracyRule = lang === 'id'
+    ? `ATURAN AKURASI FAKTA (prioritas tertinggi, di atas gaya bahasa):
+- Setiap nama orang, nama tempat, tanggal, angka, dan kutipan HARUS berasal dari daftar "FAKTA/DATA TERVERIFIKASI" yang diberikan user (jika ada). Jangan mengubah, membulatkan, atau menambah-nambahi angka/tanggal dari daftar itu.
+- Kalau user TIDAK memberi daftar fakta, atau topik memerlukan detail spesifik yang tidak ada di daftar itu: JANGAN mengarang nama/tanggal/angka spesifik. Sampaikan secara umum ("beberapa sumber menyebut...", "diperkirakan sekitar...") daripada memastikan angka yang kamu tidak yakin benar.
+- Bedakan tegas antara fakta terdokumentasi dan legenda/mitos/rumor: kalau suatu klaim sifatnya legenda atau belum terkonfirmasi, katakan itu terang-terangan ("menurut legenda setempat...", "konon...", "belum ada bukti arkeologis yang memastikan..."), jangan disajikan seolah-olah fakta pasti.
+- Ini boleh sedikit mengurangi kesan "wow" kalau memang faktanya tidak sedramatis itu — akurasi lebih penting daripada sensasi.
+- Setelah menulis draf, baca ulang setiap klaim faktual satu per satu: apakah ini benar-benar dari daftar fakta/pengetahuan yang mapan, atau ini tebakan? Kalau tebakan, ubah jadi kalimat yang tidak memastikan.`
+    : `FACTUAL ACCURACY RULE (highest priority, above voice/style):
+- Every person's name, place name, date, number, and quote MUST come from the "VERIFIED FACTS" list the user provided (if any). Do not alter, round, or embellish numbers/dates from that list.
+- If the user did NOT provide a facts list, or the topic needs specific details not in that list: DO NOT invent specific names/dates/numbers. State things generally ("some sources say...", "estimated to be around...") rather than asserting a number you're not confident is correct.
+- Clearly distinguish documented fact from legend/myth/rumor: if a claim is legendary or unconfirmed, say so explicitly ("according to local legend...", "it's said that...", "no archaeological evidence confirms this yet..."), never present it as settled fact.
+- This may slightly reduce the "wow" factor if the real facts are less dramatic — accuracy matters more than sensationalism.
+- After drafting, re-read every factual claim one by one: is this genuinely from the facts list / well-established knowledge, or is it a guess? If it's a guess, rewrite it as a non-committal statement.`;
+
+  if(lang === 'id'){
+    return `Kamu adalah penulis skrip video pendek (short-form) niche misteri/sejarah/fakta menarik Nusantara untuk TikTok dan Facebook Reels, dengan gaya bertutur seperti kreator asli Indonesia yang ngobrol santai — bukan seperti AI atau artikel berita.
+
+TUJUAN: retensi tonton setinggi mungkin dalam ${dur} detik lewat ${n} scene, TANPA mengorbankan akurasi fakta.
+
+GAYA BAHASA (wajib):
+- Bahasa Indonesia sehari-hari yang hangat, seolah cerita ke teman, boleh pakai sapaan "kamu", kalimat pendek-pendek, jeda dramatis.
+- HINDARI frasa klise ala-AI: "di video ini kita akan membahas", "mari kita telusuri", "sungguh menakjubkan", "tidak disangka-sangka". Ganti dengan cara bicara orang asli.
+- Kalau ada konteks/isu terkini yang diberikan user, jalin secara halus dan alami ke narasi (bukan sekadar ditempel), supaya terasa relevan dengan yang lagi ramai dibicarakan sekarang — ini kunci utama biar nggak terasa konten lama yang diulang.
+
+STRUKTUR RETENSI (wajib diikuti):
+- Scene 1 (hook, 2-3 detik): buka dengan pertanyaan/pernyataan yang bikin penasaran seketika, atau klaim mengejutkan yang spesifik (bukan generic). JANGAN buka dengan perkenalan topik biasa.
+- Scene tengah: bangun rasa penasaran bertahap (open loop), beri detail spesifik yang jarang diketahui, sisipkan pattern-interrupt di sekitar pertengahan biar penonton nggak scroll.
+- Scene terakhir: beri twist, kesimpulan mengejutkan, atau cliffhanger yang mendorong orang nonton ulang/komentar — jangan menutup dengan datar.
+
+${accuracyRule}
+
+${noTextRule}
+
+FORMAT OUTPUT: balas HANYA JSON valid, tanpa markdown code fence, tanpa teks pembuka/penutup, format persis:
+{"scenes":[{"text":"narasi/caption untuk scene ini, natural, akurat, dan bebas typo","image_prompt":"deskripsi visual dalam bahasa Inggris, tanpa teks/tulisan apapun, hanya elemen visual yang bisa dipastikan wajar untuk konteksnya","duration_sec":4.5}]}
+WAJIB sebelum menjawab: (1) periksa ulang setiap kalimat "text" agar bebas dari salah ketik/ejaan aneh, (2) periksa ulang setiap klaim faktual sesuai ATURAN AKURASI FAKTA di atas.`;
+  } else {
+    return `You are a short-form video scriptwriter for a mystery/history/fascinating-facts niche channel on TikTok and Reels, writing the way a real, likable creator talks — not like an AI or a news article.
+
+GOAL: maximize watch-through retention across ${dur} seconds in ${n} scenes, WITHOUT sacrificing factual accuracy.
+
+VOICE (mandatory):
+- Natural, conversational spoken English, like telling a friend something wild you just found out. Short punchy sentences, dramatic pauses implied by phrasing.
+- AVOID AI-sounding clichés: "in this video we'll explore", "let's dive into", "little did they know", "it's important to note". Write like an actual person talks.
+- If the user gives current context/an angle that's trending right now, weave it naturally into the narration (not just tacked on) so it feels timely and relevant, not like recycled old content — this is the single biggest lever for retention.
+
+RETENTION STRUCTURE (mandatory):
+- Scene 1 (hook, 2-3 sec): open with a specific, surprising claim or a question that creates instant curiosity. NEVER open with a generic topic introduction.
+- Middle scenes: build an open loop, drop specific lesser-known details, include a pattern-interrupt around the midpoint to stop scrolling.
+- Final scene: deliver a twist, a surprising payoff, or a cliffhanger that drives rewatches/comments — never end flat.
+
+${accuracyRule}
+
+${noTextRule}
+
+OUTPUT FORMAT: reply with ONLY valid JSON, no markdown code fences, no preamble or closing text, exact shape:
+{"scenes":[{"text":"narration/caption for this scene, natural, accurate, and free of typos","image_prompt":"visual description in English, no text or writing of any kind, only visual elements you're confident are plausible for the context","duration_sec":4.5}]}
+MANDATORY before answering: (1) re-check every "text" sentence for typos and awkward spelling, (2) re-check every factual claim against the FACTUAL ACCURACY RULE above.`;
+  }
+}
+
+function extractJSON(str){
+  // Strip markdown code fences if the model wrapped its JSON despite instructions.
+  let cleaned = str.trim().replace(/^```json\s*/i, '').replace(/^```\s*/,'').replace(/```\s*$/,'');
+  // Try a direct parse first (most reliable when the model followed instructions).
+  try{ JSON.parse(cleaned); return cleaned; }catch(e){ /* fall through to brace extraction */ }
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if(start===-1||end===-1) throw new Error('Respons AI tidak mengandung JSON yang valid.');
+  return cleaned.slice(start, end+1);
+}
+
+async function fetchWithTimeout(url, options, timeoutMs = 45000){
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try{
+    return await fetch(url, { ...options, signal: controller.signal });
+  }catch(e){
+    if(e.name === 'AbortError'){
+      throw new Error(`Request timeout setelah ${timeoutMs/1000} detik — server API tidak merespon. Coba lagi, atau cek apakah base URL/model sudah benar.`);
+    }
+    if(location.protocol === 'file:'){
+      throw new Error(`Gagal terhubung ke API. File ini sedang dibuka langsung dari penyimpanan HP (file://), sehingga browser memblokir permintaan ke server manapun demi keamanan. Upload dulu ke hosting web (mis. GitHub Pages) lalu buka dari alamat https://... nya.`);
+    }
+    throw new Error(`Gagal terhubung ke API (${e.message}). Kemungkinan: base URL salah, koneksi internet bermasalah, atau server API memblokir permintaan dari domain ini (CORS).`);
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+async function callChatAPI(systemPrompt, userPrompt){
+  if(cfg.format === 'anthropic'){
+    const res = await fetchWithTimeout(cfg.baseUrl.replace(/\/$/,'') + '/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'x-api-key': cfg.apiKey, 'anthropic-version':'2023-06-01'},
+      body: JSON.stringify({
+        model: cfg.model, max_tokens: 1500,
+        system: systemPrompt,
+        messages:[{role:'user', content:userPrompt}]
+      })
+    });
+    if(!res.ok) throw new Error('API error ' + res.status + ': ' + (await res.text()).slice(0,200));
+    const data = await res.json();
+    return data.content.map(c=>c.text||'').join('\n');
+  } else {
+    const res = await fetchWithTimeout(cfg.baseUrl.replace(/\/$/,'') + '/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+cfg.apiKey},
+      body: JSON.stringify({
+        model: cfg.model,
+        messages:[{role:'system', content:systemPrompt},{role:'user', content:userPrompt}],
+        temperature:0.9
+      })
+    });
+    if(!res.ok) throw new Error('API error ' + res.status + ': ' + (await res.text()).slice(0,200));
+    const data = await res.json();
+    if(!data.choices || !data.choices[0] || !data.choices[0].message){
+      throw new Error('Respons API tidak sesuai format yang diharapkan (cek model/base URL).');
+    }
+    return data.choices[0].message.content;
+  }
+}
+
+/* ---------- STEP 2: SCENES & IMAGES ---------- */
+const STYLE_LABELS = {
+  cinematic:'Cinematic', misterius:'Misterius', vintage:'Vintage', sepia:'Arsip Sepia',
+  realistic:'Realistis', dokumenter:'Dokumenter', ilustrasi:'Ilustrasi Artistik'
+};
+
+function updateStyleSeedInfo(){
+  const el = document.getElementById('styleSeedText');
+  if(!el) return;
+  el.textContent = `gaya: ${STYLE_LABELS[currentVisualStyle] || currentVisualStyle} · seed: ${projectSeed}`;
+}
+
+function rerollSeed(){
+  projectSeed = Math.floor(Math.random()*1000000000);
+  updateStyleSeedInfo();
+  setStatus('statusImg','ok', 'Seed baru dipakai. Generate ulang gambar scene yang mau divariasikan.');
+}
+
+function renderSceneList(){
+  updateStyleSeedInfo();
+  const list = document.getElementById('sceneList');
+  list.innerHTML = '';
+  scenes.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'scene';
+    div.innerHTML = `
+      <div class="scene-head">
+        <span class="scene-tag">SCENE ${i+1} · ${s.duration.toFixed(1)}s</span>
+        <div style="display:flex; gap:6px;">
+          <button class="small" onclick="genImage(${i})">Generate AI</button>
+          <button class="small" onclick="document.getElementById('upload-${i}').click()">Upload Sendiri</button>
+          <input type="file" id="upload-${i}" accept="image/*" style="display:none" onchange="uploadSceneImage(${i}, event)">
+        </div>
+      </div>
+      <label style="margin-top:4px">Teks caption</label>
+      <textarea onchange="scenes[${i}].text=this.value">${escapeHtml(s.text)}</textarea>
+      <label>Prompt gambar (dipakai kalau generate AI)</label>
+      <textarea onchange="scenes[${i}].imagePrompt=this.value">${escapeHtml(s.imagePrompt)}</textarea>
+      <div class="hint">Untuk objek/lokasi spesifik yang butuh akurasi tinggi (bentuk arca, wajah tokoh, arsitektur candi tertentu), AI gambar bisa meleset — pakai "Upload Sendiri" untuk pasang foto asli/referensi tepercaya di scene ini.</div>
+      <div id="imgwrap-${i}" class="scene-img empty">belum ada gambar</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function escapeHtml(str){
+  return (str||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+async function generateAllImages(){
+  for(let i=0;i<scenes.length;i++){ await genImage(i); }
+  setCollapsed('step-2', true);
+  setCollapsed('step-3', false);
+  buildFilmstrip();
+}
+
+// Force any image (whatever its original aspect ratio) into a strict 9:16 crop, once, at load time —
+// so the scene thumbnail preview always matches exactly what will appear in the rendered video,
+// instead of relying only on cover-fit math happening later inside the Ken Burns render loop.
+function cropImageTo9x16(imgEl){
+  return new Promise((resolve, reject) => {
+    try{
+      const targetRatio = 9/16;
+      const iw = imgEl.naturalWidth || imgEl.width;
+      const ih = imgEl.naturalHeight || imgEl.height;
+      if(!iw || !ih){ reject(new Error('Gambar tidak valid/dimensi 0.')); return; }
+      const currentRatio = iw/ih;
+      let sx=0, sy=0, sw=iw, sh=ih;
+      if(currentRatio > targetRatio){ sw = ih*targetRatio; sx = (iw-sw)/2; }
+      else if(currentRatio < targetRatio){ sh = iw/targetRatio; sy = (ih-sh)/2; }
+      const outW = 1080, outH = 1920;
+      const canvas = document.createElement('canvas');
+      canvas.width = outW; canvas.height = outH;
+      const c = canvas.getContext('2d');
+      c.drawImage(imgEl, sx, sy, sw, sh, 0, 0, outW, outH);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      const out = new Image();
+      out.onload = () => resolve({ img: out, dataUrl });
+      out.onerror = () => reject(new Error('Gagal memproses crop 9:16.'));
+      out.src = dataUrl;
+    }catch(e){
+      if(e.name === 'SecurityError'){
+        reject(new Error('Gambar dari provider ini tidak mengizinkan crop di browser (CORS). Coba provider gambar lain, atau download gambarnya lalu pakai tombol "Upload Sendiri".'));
+      } else {
+        reject(e);
+      }
+    }
+  });
+}
+
+function showScenePreview(i, dataUrl){
+  const wrap = document.getElementById('imgwrap-'+i);
+  wrap.className = 'scene-img';
+  wrap.innerHTML = '';
+  const previewImg = document.createElement('img');
+  previewImg.src = dataUrl; previewImg.style.width='100%'; previewImg.style.height='100%'; previewImg.style.objectFit='cover'; previewImg.style.borderRadius='6px';
+  wrap.appendChild(previewImg);
+}
+
+async function genImage(i){
+  readCfg();
+  if(!cfg.imgKey){ alert('Isi API key provider gambar di pengaturan (00) dulu.'); setCollapsed('step-settings', false); return; }
+  setStatus('statusImg','busy', `Generate gambar scene ${i+1}...`);
+  try{
+    const url = await callImageAPI(scenes[i].imagePrompt);
+    const raw = new Image();
+    raw.crossOrigin = 'anonymous';
+    raw.src = url;
+    await new Promise((res,rej)=>{ raw.onload=res; raw.onerror=rej; });
+    const { img, dataUrl } = await cropImageTo9x16(raw);
+    scenes[i].imgSrc = dataUrl;
+    scenes[i].imgEl = img;
+    showScenePreview(i, dataUrl);
+    setStatus('statusImg','ok', `Scene ${i+1} selesai (di-crop otomatis ke 9:16).`);
+  }catch(e){
+    console.error(e);
+    setStatus('statusImg','err', `Gagal scene ${i+1}: `+e.message);
+  }
+}
+
+async function uploadSceneImage(i, ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ alert('File yang dipilih bukan gambar.'); return; }
+  setStatus('statusImg','busy', `Memuat gambar upload scene ${i+1}...`);
+  try{
+    const rawDataUrl = await new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = () => res(reader.result);
+      reader.onerror = () => rej(new Error('Gagal membaca file.'));
+      reader.readAsDataURL(file);
+    });
+    const raw = new Image();
+    raw.src = rawDataUrl;
+    await new Promise((res, rej) => { raw.onload = res; raw.onerror = () => rej(new Error('File bukan gambar yang valid.')); });
+    const { img, dataUrl } = await cropImageTo9x16(raw);
+    scenes[i].imgSrc = dataUrl;
+    scenes[i].imgEl = img;
+    showScenePreview(i, dataUrl);
+    setStatus('statusImg','ok', `Scene ${i+1}: gambar upload terpasang, sudah di-crop otomatis ke 9:16 (bukan AI, jadi akurat sesuai aslinya).`);
+  }catch(e){
+    console.error(e);
+    setStatus('statusImg','err', `Gagal upload scene ${i+1}: `+e.message);
+  }
+}
+
+// Appended to every image prompt as a safety net (on top of the script system prompt already
+// forbidding text-in-image): AI image models default to adding signage/labels/logos in many
+// scenes, and they very often misspell or mangle it. Captions are rendered separately by this
+// app on the canvas, so the background image should never contain any text at all.
+const NO_TEXT_SUFFIX = ', no text, no words, no letters, no numbers, no captions, no subtitles, no watermark, no logo, no signage with writing, no typography';
+const NO_TEXT_NEGATIVE = 'text, words, letters, writing, caption, subtitle, watermark, logo, signature, blurry text, misspelled text, typography';
+
+// Visual style presets: the exact same descriptor string is appended to EVERY scene's prompt
+// in a project, which is the main lever for keeping color grade/lighting/mood consistent across
+// scenes generated independently (combined with reusing the same seed below).
+const STYLE_PRESETS = {
+  cinematic: ', cinematic film still, dramatic directional lighting, shallow depth of field, anamorphic lens look, teal-and-orange color grade, high production value, 35mm film look',
+  misterius: ', dark mysterious atmosphere, low-key lighting, deep heavy shadows, desaturated cold blue-grey tones, thin fog, suspenseful eerie mood',
+  vintage: ', vintage 1970s film photography, visible grain, faded warm tones, slight vignette, nostalgic muted color palette, soft focus',
+  sepia: ', aged sepia-toned archive photograph, historical look, dust and scratch texture, warm monochrome brown tones, old paper grain',
+  realistic: ', photorealistic, natural daylight, high detail, DSLR photography look, accurate realistic textures, minimal stylization',
+  dokumenter: ', documentary photography style, natural candid framing, realistic slightly desaturated color, journalistic reportage feel',
+  ilustrasi: ', painterly digital illustration, rich brushstroke texture, dramatic composition, stylized cohesive color palette, artstation quality'
+};
+
+async function callImageAPI(prompt){
+  const styleSuffix = STYLE_PRESETS[currentVisualStyle] || STYLE_PRESETS.cinematic;
+  const safePrompt = prompt + styleSuffix + NO_TEXT_SUFFIX;
+  const seed = projectSeed; // same seed reused for every scene in this project → consistent tone/grain across scenes
+
+  if(cfg.imgProvider === 'stability'){
+    const form = new FormData();
+    form.append('prompt', safePrompt);
+    form.append('negative_prompt', NO_TEXT_NEGATIVE);
+    form.append('aspect_ratio', '9:16');
+    form.append('output_format', 'png');
+    form.append('seed', String(seed));
+    const res = await fetchWithTimeout('https://api.stability.ai/v2beta/stable-image/generate/core', {
+      method:'POST',
+      headers:{ 'Authorization':'Bearer '+cfg.imgKey, 'Accept':'image/*' },
+      body: form
+    });
+    if(!res.ok) throw new Error('Stability error ' + res.status + ': ' + (await res.text()).slice(0,200));
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+
+  } else if(cfg.imgProvider === 'gemini'){
+    // Catatan: model lama "imagen-3.0-generate-002" via endpoint /predict sudah deprecated
+    // (Google mematikan seluruh lini Imagen per 17 Agustus 2026). Pakai model gambar
+    // Gemini native ("Nano Banana") via endpoint /generateContent sebagai gantinya.
+    // Catatan konsistensi: endpoint ini tidak punya parameter "seed" resmi, jadi konsistensi
+    // di provider ini hanya mengandalkan style suffix yang sama persis di tiap scene.
+    const model = 'gemini-2.5-flash-image';
+    const res = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cfg.imgKey}`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ contents:[{ parts:[{ text: safePrompt + ' — vertical 9:16 aspect ratio image, purely visual, absolutely no text anywhere in the image.' }] }] })
+    });
+    if(!res.ok) throw new Error('Gemini error ' + res.status + ': ' + (await res.text()).slice(0,200));
+    const data = await res.json();
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const imgPart = parts.find(p => p.inlineData);
+    if(!imgPart) throw new Error('Gemini tidak mengembalikan gambar (kemungkinan diblokir safety filter, coba ubah prompt).');
+    return `data:${imgPart.inlineData.mimeType};base64,` + imgPart.inlineData.data;
+
+  } else if(cfg.imgProvider === 'leonardo'){
+    const gen = await fetchWithTimeout('https://cloud.leonardo.ai/api/rest/v1/generations', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+cfg.imgKey},
+      body: JSON.stringify({ prompt: safePrompt, negative_prompt: NO_TEXT_NEGATIVE, width:768, height:1344, num_images:1, seed })
+    });
+    if(!gen.ok) throw new Error('Leonardo error ' + gen.status + ': ' + (await gen.text()).slice(0,200));
+    const genData = await gen.json();
+    const genId = genData.sdGenerationJob.generationId;
+    for(let tries=0; tries<20; tries++){
+      await new Promise(r=>setTimeout(r,3000));
+      const poll = await fetch(`https://cloud.leonardo.ai/api/rest/v1/generations/${genId}`, {
+        headers:{'Authorization':'Bearer '+cfg.imgKey}
+      });
+      const pollData = await poll.json();
+      const g = pollData.generations_by_pk;
+      if(g && g.status === 'COMPLETE' && g.generated_images.length){
+        return g.generated_images[0].url;
+      }
+      if(g && g.status === 'FAILED') throw new Error('Leonardo generation failed.');
+    }
+    throw new Error('Leonardo timeout menunggu hasil.');
+  }
+}
+
+/* ---------- FILMSTRIP ---------- */
+function buildFilmstrip(){
+  const strip = document.getElementById('filmstrip');
+  strip.innerHTML = '';
+  const total = Math.max(scenes.length, 6);
+  for(let i=0;i<total;i++){
+    const h = document.createElement('div');
+    h.className = 'hole';
+    if(scenes[i]) h.style.background = scenes[i].imgSrc ? 'var(--teal)' : 'var(--brass)';
+    strip.appendChild(h);
+  }
+}
+
+/* ---------- STEP 3: TTS VOICES ---------- */
+document.getElementById('ttsPreview').addEventListener('change', function(){
+  document.getElementById('voiceRow').style.display = this.checked ? 'block' : 'none';
+});
+const TTS_SUPPORTED = (typeof window !== 'undefined') && ('speechSynthesis' in window);
+
+function loadVoices(){
+  if(!TTS_SUPPORTED) return;
+  const sel = document.getElementById('voiceSelect');
+  const voices = speechSynthesis.getVoices();
+  sel.innerHTML = '';
+  const idVoices = voices.filter(v=>v.lang.toLowerCase().startsWith('id'));
+  const list = idVoices.length ? idVoices : voices;
+  list.forEach(v=>{
+    const opt = document.createElement('option');
+    opt.value = v.name; opt.textContent = `${v.name} (${v.lang})`;
+    sel.appendChild(opt);
+  });
+}
+
+if(TTS_SUPPORTED){
+  speechSynthesis.onvoiceschanged = loadVoices;
+  loadVoices();
+} else {
+  const ttsToggle = document.getElementById('ttsPreview');
+  ttsToggle.checked = false;
+  ttsToggle.disabled = true;
+  const label = ttsToggle.closest('.toggle').querySelector('span');
+  label.textContent = 'TTS browser tidak tersedia di sini (tetap bisa export video bisu)';
+  document.getElementById('voiceRow').style.display = 'none';
+}
+
+/* ---------- CANVAS RENDER ---------- */
+const stage = document.getElementById('stage');
+const ctx = stage.getContext('2d');
+const W = stage.width, H = stage.height;
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+  const words = text.split(' ');
+  let line = '', lines = [];
+  for(let w of words){
+    const test = line + w + ' ';
+    if(ctx.measureText(test).width > maxWidth && line){
+      lines.push(line); line = w + ' ';
+    } else line = test;
+  }
+  lines.push(line);
+  const startY = y - (lines.length-1)*lineHeight/2;
+  lines.forEach((l,i)=>{
+    ctx.strokeText(l.trim(), x, startY + i*lineHeight);
+    ctx.fillText(l.trim(), x, startY + i*lineHeight);
+  });
+}
+
+function drawFrame(sceneIdx, tInScene, sceneDur){
+  const s = scenes[sceneIdx];
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+  if(s.imgEl){
+    const p = tInScene / sceneDur;
+    const zoomFrom = 1.0, zoomTo = 1.15;
+    const kb = document.getElementById('kenBurns').checked;
+    const zoom = kb ? (zoomFrom + (zoomTo-zoomFrom)*p) : 1.06;
+    const iw = s.imgEl.width, ih = s.imgEl.height;
+    const imgRatio = iw/ih, canvasRatio = W/H;
+    let dw, dh;
+    if(imgRatio > canvasRatio){ dh = H*zoom; dw = dh*imgRatio; } else { dw = W*zoom; dh = dw/imgRatio; }
+    const dx = (W-dw)/2 - (kb ? (p-0.5)*40 : 0);
+    const dy = (H-dh)/2;
+    ctx.drawImage(s.imgEl, dx, dy, dw, dh);
+  } else {
+    ctx.fillStyle = '#221b12'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#5a4d38'; ctx.font = '40px Inter'; ctx.textAlign='center';
+    ctx.fillText('(gambar belum ada)', W/2, H/2);
+  }
+  // gradient bottom for caption legibility
+  const grad = ctx.createLinearGradient(0,H*0.55,0,H);
+  grad.addColorStop(0,'rgba(0,0,0,0)'); grad.addColorStop(1,'rgba(0,0,0,0.75)');
+  ctx.fillStyle = grad; ctx.fillRect(0,H*0.55,W,H*0.45);
+
+  // caption
+  const fadeIn = Math.min(tInScene/0.3, 1);
+  ctx.globalAlpha = fadeIn;
+  ctx.textAlign = 'center';
+  ctx.font = '600 56px Inter, sans-serif';
+  ctx.fillStyle = '#f5eede';
+  ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+  ctx.lineWidth = 10;
+  ctx.lineJoin = 'round';
+  wrapText(ctx, s.text, W/2, H*0.82, W*0.86, 66);
+  ctx.globalAlpha = 1;
+
+  // scene index tag
+  ctx.font = '500 24px "JetBrains Mono", monospace';
+  ctx.fillStyle = 'rgba(198,154,82,0.85)';
+  ctx.textAlign = 'left';
+  ctx.fillText(`${sceneIdx+1}/${scenes.length}`, 36, 60);
+}
+
+function totalDuration(){ return scenes.reduce((a,s)=>a+s.duration,0); }
+
+async function playSequence({record=false, withAudio=false} = {}){
+  const dur = totalDuration();
+  const start = performance.now();
+  let sceneIdx = 0, sceneStart = 0, elapsedAtSceneStart = 0;
+
+  if(withAudio && 'speechSynthesis' in window){
+    speechSynthesis.cancel();
+  }
+
+  return new Promise(resolve=>{
+    function frame(now){
+      const elapsed = (now-start)/1000;
+      if(elapsed >= dur){ resolve(); return; }
+      while(sceneIdx < scenes.length-1 && elapsed >= elapsedAtSceneStart + scenes[sceneIdx].duration){
+        elapsedAtSceneStart += scenes[sceneIdx].duration;
+        sceneIdx++;
+        if(withAudio && 'speechSynthesis' in window){
+          const u = new SpeechSynthesisUtterance(scenes[sceneIdx].text);
+          const voiceName = document.getElementById('voiceSelect').value;
+          const v = speechSynthesis.getVoices().find(v=>v.name===voiceName);
+          if(v) u.voice = v;
+          u.lang = 'id-ID';
+          speechSynthesis.speak(u);
+        }
+      }
+      const tInScene = elapsed - elapsedAtSceneStart;
+      drawFrame(sceneIdx, tInScene, scenes[sceneIdx].duration);
+      requestAnimationFrame(frame);
+    }
+    if(withAudio && 'speechSynthesis' in window && scenes[0]){
+      const u = new SpeechSynthesisUtterance(scenes[0].text);
+      const voiceName = document.getElementById('voiceSelect').value;
+      const v = speechSynthesis.getVoices().find(v=>v.name===voiceName);
+      if(v) u.voice = v;
+      u.lang = 'id-ID';
+      speechSynthesis.speak(u);
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+async function ensureFontsReady(){
+  try{
+    if(document.fonts){
+      await Promise.all([
+        document.fonts.load('600 56px Inter'),
+        document.fonts.load('500 24px "JetBrains Mono"')
+      ]);
+      await document.fonts.ready;
+    }
+  }catch(e){ /* non-fatal: fall back to default font metrics if font loading API misbehaves */ }
+}
+
+async function previewPlay(){
+  if(!scenes.length){ alert('Belum ada naskah/scene.'); return; }
+  await ensureFontsReady();
+  const withAudio = document.getElementById('ttsPreview').checked;
+  document.getElementById('btnPreview').disabled = true;
+  try{
+    await playSequence({withAudio});
+  }catch(e){
+    console.error(e);
+  }
+  document.getElementById('btnPreview').disabled = false;
+}
+
+async function renderVideo(){
+  if(!scenes.length){ alert('Belum ada naskah/scene.'); return; }
+  const missing = scenes.some(s=>!s.imgEl);
+  if(missing && !confirm('Ada scene tanpa gambar, lanjut render? (scene itu jadi placeholder gelap)')) return;
+
+  if(typeof MediaRecorder === 'undefined' || !stage.captureStream){
+    setStatus('statusRender','err','Browser ini tidak mendukung perekaman canvas (MediaRecorder/captureStream tidak tersedia). Coba pakai Chrome atau Firefox versi terbaru.');
+    return;
+  }
+
+  const btn = document.getElementById('btnRender');
+  btn.disabled = true;
+  setStatus('statusRender','busy','Merekam video dari canvas...');
+
+  try{
+    await ensureFontsReady();
+
+    const stream = stage.captureStream(30);
+    let mimeType = 'video/webm;codecs=vp9';
+    if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8';
+    if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+
+    const recorder = new MediaRecorder(stream, {mimeType, videoBitsPerSecond: 8_000_000});
+    const chunks = [];
+    recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
+
+    const done = new Promise((resolve, reject) => {
+      recorder.onstop = resolve;
+      recorder.onerror = reject;
+    });
+    recorder.start();
+    await playSequence({record:true, withAudio:false});
+    recorder.stop();
+    await done;
+
+    if(chunks.length === 0) throw new Error('Tidak ada data video yang terekam.');
+
+    const blob = new Blob(chunks, {type:'video/webm'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'lontara-reel-'+Date.now()+'.webm';
+    a.click();
+
+    setStatus('statusRender','ok', `Selesai! Video ${totalDuration().toFixed(1)}s ter-download (.webm). Tinggal import ke CapCut untuk tambah voice-over/musik.`);
+  }catch(e){
+    console.error(e);
+    setStatus('statusRender','err', 'Gagal merekam video: '+e.message);
+  }
+  btn.disabled = false;
+}
+
+/* ---------- CHECKLIST ---------- */
+const CHECKLIST = [
+  { group: 'Fakta & Teks', items: [
+    'Semua nama, tanggal, angka di naskah sudah dicocokkan manual dengan sumber asli (bukan cuma percaya AI)',
+    'Klaim yang sifatnya legenda/belum terkonfirmasi memang ditulis "konon/menurut legenda", bukan seolah pasti',
+    'Sudah baca ulang tiap caption sekali lagi cari typo',
+    'Kalau ada isu terkini yang dijalin ke narasi, isu itu masih akurat/belum basi'
+  ]},
+  { group: 'Visual', items: [
+    'Scene dengan objek spesifik (arca, candi, tokoh, artefak asli) sudah pakai Upload Sendiri, bukan AI generate',
+    'Sudah scan cepat semua gambar — tidak ada teks/tulisan aneh nyelip',
+    'Warna & mood antar-scene konsisten (kalau ada yang beda sendiri, sudah di-generate ulang)'
+  ]},
+  { group: 'Retensi', items: [
+    'Hook di 2 detik pertama benar-benar spesifik, bukan pembukaan generik',
+    'Ending ada twist/cliffhanger, bukan menutup datar',
+    'Durasi total masih pas 15-20 detik setelah ditambah VO di CapCut'
+  ]},
+  { group: 'Teknis', items: [
+    'Video hasil export sudah dicek diputar penuh (tidak ada scene kosong/placeholder gelap)',
+    'Caption kebaca jelas di ukuran layar HP (tidak kepotong/ketimpa gradient)',
+    'File final di GitHub Pages sudah versi terbaru (bukan cache lama)'
+  ]}
+];
+let checklistState = {};
+
+function renderChecklist(){
+  const body = document.getElementById('checklistBody');
+  body.innerHTML = '';
+  let total = 0, done = 0;
+  CHECKLIST.forEach((grp, gi) => {
+    const gDiv = document.createElement('div');
+    gDiv.className = 'cl-group';
+    const h3 = document.createElement('h3');
+    h3.textContent = grp.group;
+    gDiv.appendChild(h3);
+    grp.items.forEach((label, ii) => {
+      const key = gi + '-' + ii;
+      total++;
+      if(checklistState[key]) done++;
+      const item = document.createElement('label');
+      item.className = 'cl-item' + (checklistState[key] ? ' checked' : '');
+      item.innerHTML = `<input type="checkbox" ${checklistState[key] ? 'checked' : ''} onchange="toggleChecklistItem('${key}', this.checked)"><span>${escapeHtml(label)}</span>`;
+      gDiv.appendChild(item);
+    });
+    body.appendChild(gDiv);
+  });
+  document.getElementById('checklistProgress').textContent = `${done} / ${total} selesai`;
+}
+
+function toggleChecklistItem(key, val){
+  checklistState[key] = val;
+  renderChecklist();
+}
+
+function resetChecklist(){
+  checklistState = {};
+  renderChecklist();
+}
+
+function openChecklist(){
+  renderChecklist();
+  document.getElementById('checklistOverlay').style.display = 'block';
+}
+
+function closeChecklist(){
+  document.getElementById('checklistOverlay').style.display = 'none';
+}
+</script>
+</body>
+</html>
